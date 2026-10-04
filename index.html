@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090c">
+<title>PMA Transit — Horarios EMT Palma</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#07090c;--panel:#0d1117;--panel2:#111720;--line:#202833;--text:#f5f7fa;--muted:#8d98a6;--accent:#49d17d;--danger:#ff5d68;--shadow:0 16px 50px rgba(0,0,0,.35)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}body{min-height:100vh}
+.app{max-width:760px;margin:auto;padding:18px 16px 42px}.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 20px}.brand{font-weight:800;letter-spacing:-.04em;font-size:25px}.brand span{color:var(--accent)}.status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px rgba(73,209,125,.7)}
+.hero{background:linear-gradient(145deg,#101720,#0b0e13);border:1px solid var(--line);border-radius:25px;padding:20px;box-shadow:var(--shadow);margin-bottom:14px}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:10px;color:var(--muted);font-weight:700}.hero h1{font-size:30px;line-height:1.02;margin:8px 0 8px;letter-spacing:-.05em}.hero p{color:var(--muted);font-size:14px;margin:0 0 18px}
+.search{display:flex;gap:8px}.search input{width:100%;background:#080b0f;border:1px solid #29313c;color:#fff;border-radius:16px;padding:15px 16px;font-size:18px;outline:none}.search input:focus{border-color:#586777}.btn{border:0;border-radius:15px;padding:0 17px;background:#fff;color:#050505;font-weight:800;font-size:14px}
+.section{margin:22px 0 10px;display:flex;justify-content:space-between;align-items:end}.section h2{margin:0;font-size:18px;letter-spacing:-.02em}.section small{color:var(--muted)}
+.lines{display:grid;grid-template-columns:1fr 1fr;gap:10px}.line-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:15px;cursor:pointer;transition:.18s}.line-card:active{transform:scale(.98)}.line-no{font-size:28px;font-weight:900;letter-spacing:-.06em}.line-name{font-size:12px;color:var(--muted);margin-top:3px;min-height:30px}.line-open{font-size:11px;margin-top:13px;color:#cbd3dc}
+.result{margin-top:12px;display:none}.stop-head{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px}.stop-title{font-size:19px;font-weight:800}.stop-code{color:var(--muted);font-size:12px;margin-top:3px}.arrivals{margin-top:10px;display:grid;gap:8px}.arrival{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;align-items:center;gap:12px}.badge{width:45px;height:45px;border-radius:14px;display:grid;place-items:center;font-weight:900;color:#fff;background:var(--c,#4b7cff)}.arrival-main{min-width:0;flex:1}.arrival-line{font-weight:800}.arrival-dir{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.count{font-size:21px;font-weight:900;letter-spacing:-.04em;text-align:right}.time{font-size:11px;color:var(--muted);text-align:right;margin-top:2px}.now{color:var(--accent)}
+.map-wrap{display:none;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden}.map-head{padding:14px 16px;display:flex;justify-content:space-between}.map-title{font-weight:800}.map-sub{font-size:11px;color:var(--muted);margin-top:3px}.map{height:430px;background:#0b0e12}.leaflet-container{background:#0b0e12}.leaflet-control-zoom a{background:#121820!important;color:#fff!important;border-color:#28313b!important}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#111720;color:#fff}.leaflet-popup-content{font-family:inherit}.stop-dot{width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid var(--c,#49d17d);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.notice{background:#0d1117;border:1px dashed #303945;border-radius:18px;padding:14px;color:var(--muted);font-size:12px;line-height:1.45;margin-top:12px}.notice b{color:#fff}.error{color:#ff9da5}.loader{display:none;position:fixed;inset:0;background:rgba(7,9,12,.88);z-index:9999;align-items:center;justify-content:center;text-align:center;padding:30px}.loader.show{display:flex}.spinner{width:30px;height:30px;border:3px solid #27303a;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:430px){.app{padding-left:13px;padding-right:13px}.hero h1{font-size:27px}.lines{grid-template-columns:1fr 1fr}.map{height:390px}}
+</style>
+</head>
+<body>
+<div class="loader show" id="loader"><div><div class="spinner"></div><b id="loadTitle">Cargando GTFS oficial de EMT Palma…</b><div id="loadSub" style="color:#8d98a6;font-size:12px;margin-top:6px">Descargando horarios y recorridos</div></div></div>
+
+<main class="app">
+  <header class="top">
+    <div class="brand">PMA <span>TRANSIT</span></div>
+    <div class="status"><i class="dot"></i><span id="feedStatus">GTFS oficial</span></div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Horario programado · EMT Palma</div>
+    <h1>¿Qué bus necesitas?</h1>
+    <p>Busca una parada por su número. PMA Transit calcula el próximo servicio según el horario oficial, no según GPS.</p>
+    <div class="search">
+      <input id="stopInput" inputmode="numeric" autocomplete="off" placeholder="Ej. 456">
+      <button class="btn" id="searchBtn">Buscar</button>
+    </div>
+  </section>
+
+  <div class="section"><h2>Líneas destacadas</h2><small>25 · 23 · 35</small></div>
+  <section class="lines" id="lineCards"></section>
+
+  <section class="result" id="result">
+    <div class="stop-head">
+      <div class="eyebrow">Parada</div>
+      <div class="stop-title" id="stopName">—</div>
+      <div class="stop-code" id="stopCode">—</div>
+    </div>
+    <div class="arrivals" id="arrivals"></div>
+  </section>
+
+  <section class="map-wrap" id="mapWrap">
+    <div class="map-head"><div><div class="map-title" id="mapTitle">Línea</div><div class="map-sub" id="mapSub">Recorrido y paradas GTFS</div></div><div class="map-sub" id="mapMeta"></div></div>
+    <div class="map" id="map"></div>
+  </section>
+
+  <div class="notice">
+    <b>Importante:</b> estos tiempos son <b>programados</b>. “AHORA” significa que, según el GTFS, el servicio está programado para este minuto; no confirma la posición real del autobús.
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const GTFS_URL='https://raw.githubusercontent.com/emtpalma/Open-Data/master/lineas-paradas-horarios-gtfs.zip';
+const FEATURED=['25','23','35'];
+const state={routes:[],stops:[],trips:[],stopTimes:[],calendar:[],calendarDates:[],shapes:[],frequencies:[],routeById:new Map(),stopById:new Map(),tripById:new Map(),activeTrips:new Set(),map:null,layers:[],selectedStop:null};
+
+function csv(text){
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];
+    if(c=='"'){if(q&&n=='"'){cell+='"';i++;}else q=!q;}
+    else if(c==','&&!q){row.push(cell);cell='';}
+    else if((c=='\n'||c=='\r')&&!q){if(c=='\r'&&n=='\n')i++;row.push(cell);if(row.some(x=>x!==''))rows.push(row);row=[];cell='';}
+    else cell+=c;
+  }
+  if(cell||row.length){row.push(cell);rows.push(row);}
+  const h=rows.shift().map(x=>x.trim());
+  return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]??'').trim()])));
+}
+async function loadFile(zip,name){
+  const f=zip.file(name); return f?csv(await f.async('text')):[];
+}
+async function loadGTFS(){
+  const r=await fetch(GTFS_URL,{cache:'no-store'}); if(!r.ok)throw new Error('No se pudo descargar el GTFS');
+  const zip=await JSZip.loadAsync(await r.arrayBuffer());
+  state.routes=await loadFile(zip,'routes.txt'); state.stops=await loadFile(zip,'stops.txt');
+  state.trips=await loadFile(zip,'trips.txt'); state.stopTimes=await loadFile(zip,'stop_times.txt');
+  state.calendar=await loadFile(zip,'calendar.txt'); state.calendarDates=await loadFile(zip,'calendar_dates.txt');
+  state.shapes=await loadFile(zip,'shapes.txt'); state.frequencies=await loadFile(zip,'frequencies.txt');
+  state.routes.forEach(x=>state.routeById.set(x.route_id,x));
+  state.stops.forEach(x=>state.stopById.set(x.stop_id,x));
+  state.trips.forEach(x=>state.tripById.set(x.trip_id,x));
+  computeActiveServices();
+}
+function ymd(d){return d.toISOString().slice(0,10).replaceAll('-','')}
+function computeActiveServices(){
+  const d=new Date(), date=ymd(d), dow=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][d.getDay()];
+  const active=new Set();
+  for(const c of state.calendar){
+    if(date>=c.start_date&&date<=c.end_date&&c[dow]==='1')active.add(c.service_id);
+  }
+  for(const x of state.calendarDates.filter(x=>x.date===date)){
+    if(x.exception_type==='1')active.add(x.service_id); else if(x.exception_type==='2')active.delete(x.service_id);
+  }
+  state.activeTrips.clear();
+  state.trips.forEach(t=>{if(active.has(t.service_id))state.activeTrips.add(t.trip_id)});
+}
+function seconds(h){
+  const p=h.split(':').map(Number); return p[0]*3600+p[1]*60+(p[2]||0);
+}
+function clockNow(){
+  const d=new Date(); return d.getHours()*3600+d.getMinutes()*60+d.getSeconds();
+}
+function fmtClock(s){s=((s%86400)+86400)%86400;return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s%3600/60)).padStart(2,'0')}
+function minsUntil(s){let n=clockNow(),diff=s-n;if(diff<0)diff+=86400;return diff}
+function labelMinutes(sec){
+  if(sec<=30)return '<span class="now">AHORA</span>';
+  const m=Math.ceil(sec/60); return m+' min';
+}
+function routeInfo(routeId){return state.routeById.get(routeId)||{}}
+function routeColor(r){return '#'+(r.route_color||'4b7cff')}
+function renderLines(){
+  const el=document.getElementById('lineCards');el.innerHTML='';
+  for(const no of FEATURED){
+    const r=state.routes.find(x=>x.route_short_name===no);
+    if(!r)continue;
+    const c=routeColor(r);
+    const card=document.createElement('article');card.className='line-card';
+    card.innerHTML=`<div class="line-no" style="color:${c}">${no}</div><div class="line-name">${r.route_long_name||r.route_desc||'EMT Palma'}</div><div class="line-open">Ver mapa y paradas →</div>`;
+    card.onclick=()=>showRoute(r);
+    el.appendChild(card);
+  }
+}
+function activeTimesForStop(stopCode,onlyRoute=null){
+  const stopIds=state.stops.filter(s=>s.stop_code===String(stopCode)||s.stop_id===String(stopCode)).map(s=>s.stop_id);
+  const ids=new Set(stopIds); const out=[];
+  for(const st of state.stopTimes){
+    if(!ids.has(st.stop_id)||!state.activeTrips.has(st.trip_id))continue;
+    const t=state.tripById.get(st.trip_id);if(!t)continue;
+    const r=routeInfo(t.route_id);if(onlyRoute&&r.route_short_name!==onlyRoute)continue;
+    const raw=st.departure_time||st.arrival_time;if(!raw)continue;
+    const sec=seconds(raw);
+    const diff=sec-clockNow();
+    if(diff>=-30)out.push({sec,trip:t,route:r,stop:state.stopById.get(st.stop_id)});
+  }
+  out.sort((a,b)=>a.sec-b.sec);
+  return out.slice(0,40);
+}
+function searchStop(){
+  const code=document.getElementById('stopInput').value.trim();if(!code)return;
+  const stop=state.stops.find(s=>s.stop_code===code);
+  if(!stop){document.getElementById('result').style.display='block';document.getElementById('stopName').textContent='Parada no encontrada';document.getElementById('stopCode').textContent='';document.getElementById('arrivals').innerHTML='<div class="notice error">Ese número no aparece en el GTFS actual de EMT Palma.</div>';return;}
+  state.selectedStop=stop;
+  document.getElementById('result').style.display='block';document.getElementById('stopName').textContent=stop.stop_name||'Parada EMT';document.getElementById('stopCode').textContent='Código '+(stop.stop_code||stop.stop_id);
+  renderArrivals();document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderArrivals(){
+  if(!state.selectedStop)return;
+  const arr=activeTimesForStop(state.selectedStop.stop_code);
+  const el=document.getElementById('arrivals');
+  if(!arr.length){el.innerHTML='<div class="notice">No quedan servicios programados para esta parada hoy según el calendario GTFS activo.</div>';return;}
+  el.innerHTML=arr.slice(0,12).map(a=>{
+    const c=routeColor(a.route),no=a.route.route_short_name||'?';
+    const dir=a.trip.trip_headsign||'Dirección no indicada';
+    const diff=Math.max(0,a.sec-clockNow());
+    return `<div class="arrival"><div class="badge" style="--c:${c}">${no}</div><div class="arrival-main"><div class="arrival-line">${a.route.route_long_name||'EMT Palma'}</div><div class="arrival-dir">${dir}</div></div><div><div class="count">${labelMinutes(diff)}</div><div class="time">${fmtClock(a.sec)}</div></div></div>`;
+  }).join('');
+}
+function shapeForTrip(tripId){
+  const t=state.tripById.get(tripId);if(!t||!t.shape_id)return [];
+  return state.shapes.filter(s=>s.shape_id===t.shape_id).sort((a,b)=>Number(a.shape_pt_sequence)-Number(b.shape_pt_sequence));
+}
+function clearMap(){if(state.map){state.layers.forEach(l=>state.map.removeLayer(l));state.layers=[];}}
+function showRoute(route){
+  const trips=state.trips.filter(t=>t.route_id===route.route_id&&state.activeTrips.has(t.trip_id));
+  const byDir=new Map();trips.forEach(t=>{if(!byDir.has(t.direction_id))byDir.set(t.direction_id,t)});
+  document.getElementById('mapWrap').style.display='block';document.getElementById('mapTitle').textContent='Línea '+route.route_short_name;document.getElementById('mapSub').textContent=route.route_long_name||route.route_desc||'Recorrido oficial GTFS';document.getElementById('mapMeta').textContent=state.stops.length+' paradas en el feed';
+  if(!state.map)state.map=L.map('map',{zoomControl:true,attributionControl:true}).setView([39.57,2.65],11);
+  clearMap();
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(state.map);
+  const bounds=[];
+  for(const [dir,t] of byDir){
+    const pts=shapeForTrip(t.trip_id).map(s=>[Number(s.shape_pt_lat),Number(s.shape_pt_lon)]).filter(x=>x.every(Number.isFinite));
+    if(pts.length>1){const poly=L.polyline(pts,{color:routeColor(route),weight:5,opacity:.85}).addTo(state.map);state.layers.push(poly);bounds.push(...pts);}
+  }
+  const served=new Map();
+  for(const st of state.stopTimes){
+    const t=state.tripById.get(st.trip_id);if(!t||t.route_id!==route.route_id||!state.activeTrips.has(t.trip_id))continue;
+    const s=state.stopById.get(st.stop_id);if(s&&!served.has(s.stop_id))served.set(s.stop_id,s);
+  }
+  for(const s of served.values()){
+    const lat=Number(s.stop_lat),lon=Number(s.stop_lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
+    const icon=L.divIcon({className:'',html:`<div class="stop-dot" style="--c:${routeColor(route)}"></div>`,iconSize:[10,10],iconAnchor:[5,5]});
+    const m=L.marker([lat,lon],{icon}).bindPopup(`<b>${s.stop_code||s.stop_id}</b><br>${s.stop_name||''}<br><span style="color:#8d98a6">L${route.route_short_name}</span>`).addTo(state.map);state.layers.push(m);bounds.push([lat,lon]);
+  }
+  if(bounds.length)state.map.fitBounds(bounds,{padding:[20,20]});
+  setTimeout(()=>state.map.invalidateSize(),100);
+  document.getElementById('mapWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function fail(e){document.getElementById('loader').classList.remove('show');document.getElementById('feedStatus').textContent='Error GTFS';document.getElementById('arrivals').innerHTML=`<div class="notice error"><b>No se pudo cargar el GTFS oficial.</b><br>${e.message}<br><br>Si lo estás probando en GitHub Pages, revisa que el navegador permita cargar el ZIP de GitHub Raw.</div>`;document.getElementById('result').style.display='block';}
+document.getElementById('searchBtn').onclick=searchStop;
+document.getElementById('stopInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchStop()});
+(async()=>{try{await loadGTFS();renderLines();document.getElementById('loader').classList.remove('show');document.getElementById('feedStatus').textContent='GTFS EMT · activo';setInterval(()=>{if(state.selectedStop){computeActiveServices();renderArrivals()}},1000)}catch(e){console.error(e);fail(e)}})();
+</script>
+</body>
+</html>
